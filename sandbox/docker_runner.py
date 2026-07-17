@@ -41,3 +41,14 @@ def run_python_code(code: str):
         "stderr": stderr,
         "exit_code": exit_code,
     }
+
+# -------------------------
+# Test the function
+# -------------------------
+
+if __name__ == "__main__":
+ result = run_python_code("""
+print('Hello from Docker!')
+""")
+
+print(result)
