@@ -8,16 +8,36 @@ def run_python_code(code: str):
         image="python:3.11",
         command=f'python -c "{code}"',
         detach=True,
-        remove=False
+        stdout=True,
+        stderr=True,
+        remove=False,
     )
 
-    # Wait until the container finishes
+    # Wait until execution finishes
     result = container.wait()
 
-    # Read the logs
-    output = container.logs().decode("utf-8")
+    # Get output
+    logs = container.logs(
+        stdout=True,
+        stderr=True
+    ).decode("utf-8")
 
-    # Remove the container
+    exit_code = result["StatusCode"]
+
+    if exit_code == 0:
+        status = "success"
+        stdout = logs
+        stderr = ""
+    else:
+        status = "failed"
+        stdout = ""
+        stderr = logs
+
     container.remove()
 
-    return output
+    return {
+        "status": status,
+        "stdout": stdout,
+        "stderr": stderr,
+        "exit_code": exit_code,
+    }
