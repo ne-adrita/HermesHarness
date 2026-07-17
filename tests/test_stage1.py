@@ -213,12 +213,61 @@ verdict(
     f"{len(new_containers)} new containers: {[c.name for c in new_containers]}",
 )
 
+# ---------- 9. LangGraph workflow integration ----------
+section("TEST 9: LangGraph workflow integration")
+
+try:
+    from agent.graph import build_graph
+
+    graph = build_graph()
+
+    # Success through the graph
+    result = graph.invoke({
+        "code": "print('LangGraph works!')",
+        "stdout": "",
+        "stderr": "",
+        "status": "",
+        "exit_code": -1,
+    })
+    t9_success = (
+        result["status"] == "success"
+        and "LangGraph works!" in result["stdout"]
+        and result["exit_code"] == 0
+    )
+    verdict("Graph: successful code flows through all nodes", t9_success,
+            "status=success, stdout contains 'LangGraph works!', exit_code=0",
+            f"status={result['status']}, stdout={repr(result['stdout'])}, exit_code={result['exit_code']}")
+
+    # Failure through the graph
+    result = graph.invoke({
+        "code": "print(10/0)",
+        "stdout": "",
+        "stderr": "",
+        "status": "",
+        "exit_code": -1,
+    })
+    t9_failure = (
+        result["status"] == "failed"
+        and "ZeroDivisionError" in result["stderr"]
+        and result["exit_code"] == 1
+    )
+    verdict("Graph: failing code propagates error in state", t9_failure,
+            "status=failed, stderr contains 'ZeroDivisionError', exit_code=1",
+            f"status={result['status']}, stderr contains 'ZeroDivisionError'={'ZeroDivisionError' in result['stderr']}, exit_code={result['exit_code']}")
+
+    t9_ok = t9_success and t9_failure
+
+except ImportError as exc:
+    t9_ok = False
+    print(f"  {FAIL}[SKIP]{END} LangGraph test skipped — import error: {exc}")
+    print()
+
 # ---------- Overall ----------
 section(f"{BOLD}OVERALL RESULT{END}")
 
-all_passed = all([t1_ok, t2_ok, t3_ok, t4_ok, t5_ok, t6_ok, t7_ok, t8_ok])
+all_passed = all([t1_ok, t2_ok, t3_ok, t4_ok, t5_ok, t6_ok, t7_ok, t8_ok, t9_ok])
 if all_passed:
-    print(f"  {OK}{BOLD}ALL 8 TESTS PASSED.{END}")
+    print(f"  {OK}{BOLD}ALL 9 TESTS PASSED.{END}")
     sys.exit(0)
 else:
     print(f"  {FAIL}{BOLD}SOME TESTS FAILED.  Review output above.{END}")
